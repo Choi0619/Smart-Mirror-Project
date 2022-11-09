@@ -1,0 +1,42 @@
+- name: smart-mirror automation
+  hosts: raspberry
+  become: yes
+  vars:
+    NODEJS_VERSION: "18"
+    ansible_distribution_release: buster # for Raspbian
+  tasks:
+    - action: ping
+
+    - name: Run the equivalent of "apt-get update" as a separate step
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+    
+    - name: Add nodejs apt key
+      apt_key:
+        url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+        state: present
+    
+    - name: Add nodejs 13.x ppa for apt repo
+      apt_repository:
+        repo: "deb https://deb.nodesource.com/node_{{ NODEJS_VERSION }}.x {{ ansible_distribution_release }} main"
+        state: present
+        update_cache: true
+    
+    - name: "Install Node.Js"
+      apt:
+        name: nodejs
+        state: present
+    
+    - name: "Load ssh key"
+      copy:
+        src: ~/.ssh/id_rsa
+        dest: ~/.ssh/id_rsa
+        owner: pi
+        group: pi
+        mode: 0600
+    
+    - name: Clone github repo
+      git:
+        repo: git@github.com:Smart-Mirror-Project/smart-mirror.git
+        dest: /home/pi/smart-mirror
